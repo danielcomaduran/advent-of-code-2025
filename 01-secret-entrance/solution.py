@@ -33,7 +33,11 @@ def decoder(starting_position, movements, count_passes=False):
         rotations.append(knob_number)
 
     zero_count = sum(1 for num in rotations if num == 0)
-    output = zero_count if not count_passes else (zero_count + passes)
+
+    if count_passes:
+        output = zero_count + passes
+    else:
+        output = zero_count
 
     return output
 #%% Part 1: Decode the secret entrance
@@ -47,5 +51,3 @@ print(f"The password for the secret entrance is: {password}")
 knob_number = 50    # Starting position
 password_extended = decoder(knob_number, movements, count_passes=True)
 print(f"The extended password for the secret entrance is: {password_extended}")
-
-
