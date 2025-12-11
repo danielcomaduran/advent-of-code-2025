@@ -1,8 +1,8 @@
 #%% Import data
 with open("input.txt") as file:
-    boxes_positions = file.read().split("\n")
+    boxes_positions = file.read().strip().split("\n")
 
-boxes_int_positions = [[int(number) for number in numbers.split(",")] for numbers in boxes_positions]
+boxes_int_positions = [[int(number) for number in numbers.split(",")] for numbers in boxes_positions if numbers.strip()]
 
 #%% Functions
 def compute_distance(box1: list, box2: list) -> int:
@@ -19,13 +19,14 @@ def get_all_distances(boxes_position: list) -> list[tuple[tuple[int, int], int]]
 
     return distances
 
-def connect_boxes(boxes_position: list, n_connections: int) -> list[list[int]]:
+def connect_boxes(boxes_position: list, n_connections: int, return_last_pair: bool = False) -> tuple[list[list[int]], tuple[int, int]]:
     # Get all distances
     distances = get_all_distances(boxes_position)
 
     # Create connections
     connections = []
     i = 0 # Counter for current number of connections
+    last_pair = None
     while i < n_connections and i < len(distances):
         box1, box2 = distances[i][0]
 
@@ -42,27 +43,46 @@ def connect_boxes(boxes_position: list, n_connections: int) -> list[list[int]]:
 
         # Add or merge according to what was found
         if sublist1 and sublist2:
+            # Merge the two groups so the connection counts
             if sublist1 is not sublist2:
-                # Merge the two groups so the connection counts
                 sublist1.extend(x for x in sublist2 if x not in sublist1)
                 connections.remove(sublist2)
-            # else already in same group; skip
+                last_pair = (box1, box2)
+        # If only one sublist was found, add the other box to it
         elif sublist1:
             sublist1.append(box2)
+            last_pair = (box1, box2)
         elif sublist2:
             sublist2.append(box1)
+            last_pair = (box1, box2)
+        # If no sublist was found, create a new one
         else:
             connections.append([box1, box2])
+            last_pair = (box1, box2)
 
         i += 1
     
-    connections.sort(key=len, reverse=True)
-    return connections
+    if return_last_pair:
+        return last_pair
+    else:
+        connections.sort(key=len, reverse=True)
+        return connections
+
+def last_pair_to_connect(boxes_position: list) -> tuple[list[list[int]], tuple[int, int]]:
+    n_boxes = len(boxes_position)
+    return connect_boxes(boxes_position, n_connections=n_boxes*(n_boxes-1)//2, return_last_pair=True)
+
 #%% Part 1
-connections = connect_boxes(boxes_int_positions, n_connections=1000)
+connections = connect_boxes(boxes_int_positions, n_connections=10)
 multiplication = 1
 for group in connections[:3]:
     multiplication *= len(group)
 print(f"Part 1 result: {multiplication}")
 
 # %% Part 2
+last_pair = last_pair_to_connect(boxes_int_positions)
+box1_idx, box2_idx = last_pair
+multiplication_last_two = boxes_int_positions[box1_idx][0] * boxes_int_positions[box2_idx][0]
+print(f"Last two boxes to connect: {box1_idx}, {box2_idx}")
+print(f"Part 2 result: {multiplication_last_two}")
+# %%
